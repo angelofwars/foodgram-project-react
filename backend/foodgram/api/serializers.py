@@ -1,5 +1,7 @@
 from djoser.serializers import UserSerializer
+
 from ..user.models import User
+
 
 class CustomUserSerializer(UserSerializer):
     class Meta:

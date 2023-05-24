@@ -11,9 +11,10 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 import os
-from pathlib import Path
-from dotenv import load_dotenv
 from datetime import timedelta
+from pathlib import Path
+
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(os.path.join(BASE_DIR.parent.parent, 'infra/.env'), verbose=True)
@@ -49,6 +50,8 @@ INSTALLED_APPS = [
     # 'django_filters',
     'rest_framework.authtoken',
     'user.apps.UserConfig',
+    'api.apps.ApiConfig',
+    'recipes.apps.RecipesConfig',
 
 ]
 

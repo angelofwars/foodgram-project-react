@@ -7,6 +7,8 @@ from django.db.models import (SET_NULL, CharField, EmailField, ForeignKey,
                               SlugField, TextField)
 
 from .validators import validate_username, validate_year
+
+
 class User(AbstractUser):
 
     USER = 'user'
