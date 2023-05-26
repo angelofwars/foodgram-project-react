@@ -1,6 +1,6 @@
-from django.db import models
 from django.core.validators import MinValueValidator
-from foodgram.settings import QUERY_SET_MODELS
+from django.db import models
+from backend.foodgram.foodgram.settings import QUERY_SET_LENGTH
 from user.models import User
 
 
