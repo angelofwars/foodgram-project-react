@@ -157,3 +157,12 @@ SIMPLE_JWT = {
 }
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Далее вынесены постоянные которые нужны для работы проекта
+# ----------------------------------------------------------------------------
+# Constant values
+INGREDIENT_MIN_AMOUNT = 1
+INGREDIENT_MIN_AMOUNT_ERROR = (
+    'Количество ингредиентов не может быть меньше {min_value}!'
+)
+QUERY_SET_LENGTH = 60

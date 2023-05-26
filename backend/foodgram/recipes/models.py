@@ -2,8 +2,7 @@ from django.db import models
 from django.core.validators import MinValueValidator
 from user.models import User
 from colorfield.fields import ColorField
-
-QUERY_SET_LENGTH = 60
+from django.conf import settings
 
 
 
@@ -28,7 +27,7 @@ class Ingredient(models.Model):
         verbose_name_plural = 'Ингредиенты'
 
     def __str__(self):
-        return self.name[:QUERY_SET_LENGTH].capitalize()
+        return self.name[:settings.QUERY_SET_LENGTH].capitalize()
 
 
 class Tag(models.Model):
@@ -69,7 +68,7 @@ class Tag(models.Model):
         verbose_name_plural = 'Теги'
 
     def __str__(self):
-        return self.name[:QUERY_SET_LENGTH]
+        return self.name[:settings.QUERY_SET_LENGTH]
 
     def __unicode__(self):
         return self.name
@@ -150,12 +149,17 @@ class Recipe(models.Model):
         verbose_name_plural = 'Рецепты'
 
     def __str__(self):
-        return self.name[:QUERY_SET_LENGTH]
+        return self.name[:settings.QUERY_SET_LENGTH]
 
 
 
 
 class RecipeIngredient(models.Model):
+    """
+    Количество ингредиентов в рецепте.
+    Модель связывает Recipe и Ingredient с указанием количества ингредиентов.
+    """
+
     recipe = models.ForeignKey(
         Recipe,
         verbose_name="Рецепт",
@@ -172,15 +176,16 @@ class RecipeIngredient(models.Model):
         help_text="Ингридиетны"
     )
 
-    amount = models.IntegerField(
-        verbose_name='Количество',
-        validators=[
+    amount = models.PositiveSmallIntegerField(
+        default=settings.INGREDIENT_MIN_AMOUNT,
+        validators=(
             MinValueValidator(
-                1,
-                message='Минимальное количество не меньше чем 1'
-            )
-        ],
-        help_text='Количество',
+                settings.INGREDIENT_MIN_AMOUNT,
+                message=settings.INGREDIENT_MIN_AMOUNT_ERROR
+            ),
+        ),
+        verbose_name="Количество",
+        help_text="Количество",
     )
 
     class Meta:
@@ -198,7 +203,7 @@ class RecipeIngredient(models.Model):
         return f'{self.ingredient} в {self.ingredient.measurement_unit}'
 
 class Favorite(models.Model):
-    """Добавление рецпта в избранное"""
+    """Модель избранного"""
     user = models.ForeignKey(
         User,
         verbose_name="Автор добавил рецепт в избранное",
@@ -206,6 +211,53 @@ class Favorite(models.Model):
         related_name="author"
     )
 
+    recipe = models.ForeignKey(
+        Recipe,
+        verbose_name='Избранный рецепт',
+        on_delete=models.CASCADE,
+        related_name='favorite',
+        help_text='Избранный рецепт',
+    )
+
+    class Meta:
+        ordering = ('id',)
+        verbose_name = 'Избранный рецепт'
+        verbose_name_plural = 'Избранные рецепты'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'recipe',),
+                name='unique_favorite',
+            ),
+        ]
+
 
 class Foodbasket(models.Model):
-    pass
+    """Рецепты в корзине покупок.
+    Модель связывает Recipe и  User.
+    """
+    user = models.ForeignKey(
+        User,
+        verbose_name='Пользователь добавивший покупки',
+        on_delete=models.CASCADE,
+        related_name='shopping',
+        help_text='Пользователь добавивший покупки',
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        verbose_name='Рецепт для покупок',
+        on_delete=models.CASCADE,
+        related_name='shopping',
+        help_text='Рецепт для покупок',
+    )
+
+    class Meta:
+        ordering = ('id',)
+        verbose_name = 'Рецепт для покупок'
+        verbose_name_plural = 'Рецепты для покупок'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'recipe',),
+                name='unique_shoppingcart',
+            ),
+        ]
+        
