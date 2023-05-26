@@ -1,8 +1,10 @@
-from django.core.validators import MinValueValidator
 from django.db import models
+from django.core.validators import MinValueValidator
 from backend.foodgram.foodgram.settings import QUERY_SET_LENGTH
 from user.models import User
 
+
+QUERY_SET_MODELS = 60
 
 class Ingredient(models.Model):
     """Модель ингридиентов"""
@@ -14,9 +16,9 @@ class Ingredient(models.Model):
     # franchise = models.ForeignKey(Franchise)
     # diets = models.ManyToManyField(Diet, null=True, blank=True, verbose_name="special diets or food allergies")
     measurement_unit = models.CharField(
-        verbose_name='Единица измерения',
+        verbose_name="Единица измерения",
         max_length=200,
-        help_text='Единица измерения',
+        help_text="Единица измерения",
     )
 
     class Meta:
@@ -25,7 +27,7 @@ class Ingredient(models.Model):
         verbose_name_plural = 'Ингредиенты'
 
     def __str__(self):
-        return self.name[:QUERY_SET_LENGTH].capitalize()
+        return self.name[:QUERY_SET_MODELS].capitalize()
 
 
 class Tag(models.Model):
@@ -37,12 +39,7 @@ class Tag(models.Model):
         help_text="Имя тега"
     )
 
-    color = models.CharField(
-        verbose_name="Цвет тега в HEX",
-        max_length=30,
-        unique=True,
-        help_text="Цвет тега в HEX"
-    )
+    color = models.
 
     slug = models.SlugField(
         verbose_name="Slag юрл",
@@ -90,15 +87,15 @@ class Recipe(models.Model):
 
     text = models.TextField(
         verbose_name="Напиши тут рецепт",
-        help_text='Текст рецепта'
+        help_text="Текст рецепта"
     )
 
     date = models.DateField()
 
     created_on = models.DateField(
-        verbose_name='Дата публикации',
+        verbose_name="Дата публикации",
         auto_now_add=True,
-        help_text='Дата публикации',
+        help_text="Дата публикации",
         )
     
     updated_on = models.DateField(
@@ -144,7 +141,46 @@ class Recipe(models.Model):
 
 
 class RecipeIngredient(models.Model):
-    pass
+    recipe = models.ForeignKey(
+        Recipe,
+        verbose_name="Рецепт",
+        on_delete=models.CASCADE,
+        related_name="ingredient",
+        help_text="Рецепт",
+    )
+
+    ingredient = models.ForeignKey(
+        Ingredient,
+        verbose_name="Ингридиенты для рецепта",
+        on_delete=models.CASCADE,
+        related_name="ingredient",
+        help_text="Ингридиетны"
+    )
+
+    amount = models.IntegerField(
+        verbose_name='Количество',
+        validators=[
+            MinValueValidator(
+                1,
+                message='Минимальное количество не меньше чем 1'
+            )
+        ],
+        help_text='Количество',
+    )
+
+    class Meta:
+        ordering = ("recipe",)
+        verbose_name = "Количество ингредиентов"
+        verbose_name_plural = "Количество ингредиентов"
+        constraints = [
+            models.UniqueConstraint(
+                fields=("recipe", "ingredient",),
+                name="unique_ingredient",
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.ingredient} в {self.ingredient.measurement_unit}'
 
 class Follow(models.Model):
     pass
