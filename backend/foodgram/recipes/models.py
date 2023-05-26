@@ -1,10 +1,11 @@
 from django.db import models
 from django.core.validators import MinValueValidator
-from backend.foodgram.foodgram.settings import QUERY_SET_LENGTH
 from user.models import User
+from colorfield.fields import ColorField
+
+QUERY_SET_LENGTH = 60
 
 
-QUERY_SET_MODELS = 60
 
 class Ingredient(models.Model):
     """Модель ингридиентов"""
@@ -27,11 +28,20 @@ class Ingredient(models.Model):
         verbose_name_plural = 'Ингредиенты'
 
     def __str__(self):
-        return self.name[:QUERY_SET_MODELS].capitalize()
+        return self.name[:QUERY_SET_LENGTH].capitalize()
 
 
 class Tag(models.Model):
     """Модель тега"""
+
+    COLOR_PALETTE = [
+        ("#0000FF", 'Синий'),
+        ("#FFA500", 'Оранжевый'),
+        ("#008000", 'Зеленый'),
+        ("#800080", 'Фиолетовый'),
+        ("#FFFF00", 'Желтый'),
+    ]
+
     name = models.CharField(
         verbose_name="Название",
         max_length=250,
@@ -39,7 +49,12 @@ class Tag(models.Model):
         help_text="Имя тега"
     )
 
-    color = models.
+    color = ColorField(
+        default="##0000FF",
+        verbose_name="Название",
+        choices=COLOR_PALETTE,
+        help_text="Имя тега"
+    )
 
     slug = models.SlugField(
         verbose_name="Slag юрл",
@@ -54,7 +69,7 @@ class Tag(models.Model):
         verbose_name_plural = 'Теги'
 
     def __str__(self):
-        return self.name[:QUERY_SET_MODELS]
+        return self.name[:QUERY_SET_LENGTH]
 
     def __unicode__(self):
         return self.name
@@ -135,7 +150,7 @@ class Recipe(models.Model):
         verbose_name_plural = 'Рецепты'
 
     def __str__(self):
-        return self.name[:QUERY_SET_MODELS]
+        return self.name[:QUERY_SET_LENGTH]
 
 
 
@@ -182,8 +197,15 @@ class RecipeIngredient(models.Model):
     def __str__(self):
         return f'{self.ingredient} в {self.ingredient.measurement_unit}'
 
-class Follow(models.Model):
-    pass
+class Favorite(models.Model):
+    """Добавление рецпта в избранное"""
+    user = models.ForeignKey(
+        User,
+        verbose_name="Автор добавил рецепт в избранное",
+        on_delete=models.CASCADE,
+        related_name="author"
+    )
+
 
 class Foodbasket(models.Model):
     pass

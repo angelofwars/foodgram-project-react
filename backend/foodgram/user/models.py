@@ -126,3 +126,32 @@ class User(AbstractUser):
         return self.username
 
 
+class Follow(models.Model):
+    """Модель подписки на подписки"""
+    user = models.ForeignKey(
+        User,
+        verbose_name="Пользователь добавлен в избранное",
+        on_delete=models.CASCADE,
+        related_name="follower",
+        help_text="follower",
+    )
+
+    author = models.ForeignKey(
+        User,
+        verbose_name="Автор",
+        on_delete=models.CASCADE,
+        related_name="author"
+        help_text="автор"
+    )
+
+    class Meta:
+        ordering = ('id',)
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'author',),
+                name='unique_follow',
+            ),
+        ]
+        
