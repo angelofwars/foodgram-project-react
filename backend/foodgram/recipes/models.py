@@ -199,6 +199,7 @@ class RecipeIngredient(models.Model):
             ),
         ]
 
+
     def __str__(self):
         return f'{self.ingredient} в {self.ingredient.measurement_unit}'
 
@@ -213,20 +214,20 @@ class Favorite(models.Model):
 
     recipe = models.ForeignKey(
         Recipe,
-        verbose_name='Избранный рецепт',
+        verbose_name="Избранный рецепт",
         on_delete=models.CASCADE,
-        related_name='favorite',
-        help_text='Избранный рецепт',
+        related_name="favorite",
+        help_text="Избранный рецепт",
     )
 
     class Meta:
-        ordering = ('id',)
-        verbose_name = 'Избранный рецепт'
-        verbose_name_plural = 'Избранные рецепты'
+        ordering = ("id",)
+        verbose_name = "Избранный рецепт"
+        verbose_name_plural = "Избранные рецепты"
         constraints = [
             models.UniqueConstraint(
-                fields=('user', 'recipe',),
-                name='unique_favorite',
+                fields=("user", "recipe",),
+                name="unique_favorite",
             ),
         ]
 
@@ -237,27 +238,27 @@ class Foodbasket(models.Model):
     """
     user = models.ForeignKey(
         User,
-        verbose_name='Пользователь добавивший покупки',
+        verbose_name="Пользователь добавивший покупки",
         on_delete=models.CASCADE,
-        related_name='shopping',
-        help_text='Пользователь добавивший покупки',
+        related_name="shopping",
+        help_text="Пользователь добавивший покупки",
     )
     recipe = models.ForeignKey(
         Recipe,
-        verbose_name='Рецепт для покупок',
+        verbose_name="Рецепт для покупок",
         on_delete=models.CASCADE,
-        related_name='shopping',
-        help_text='Рецепт для покупок',
+        related_name="shopping",
+        help_text="Рецепт для покупок",
     )
 
     class Meta:
-        ordering = ('id',)
-        verbose_name = 'Рецепт для покупок'
-        verbose_name_plural = 'Рецепты для покупок'
+        ordering = ("id",)
+        verbose_name = "Рецепт для покупок"
+        verbose_name_plural = "Рецепты для покупок"
         constraints = [
             models.UniqueConstraint(
-                fields=('user', 'recipe',),
-                name='unique_shoppingcart',
+                fields=("user", "recipe",),
+                name="unique_shoppingcart",
             ),
         ]
         
