@@ -10,11 +10,11 @@ from django.conf import settings
 from django.db.models import Sum
 from urllib.parse import unquote
 from reportlab.pdfgen import canvas
-from api.models import (Favorite, Ingredient, RecipeIngredient, Recipe,
-                        Tag)
+from recipes.models import (Favorite, Ingredient, RecipeIngredient, Recipe,
+                        Tag, Foodbasket)
 from .utils import add_and_del, out_list_ingredients
 from .pagination import LimitPageNumberPagination
-from .permissions import (IsAdminOrReadOnly,)
+from .permissions import IsOwnerOrReadOnly, IsAdminOrReadOnly
 from .serializers import (AuthSignUpSerializer, AuthTokenSerializer,
                           AddFavoriteRecipeSerializer,
                           AddShoppingListRecipeSerializer, FollowSerializer,
@@ -26,7 +26,7 @@ from .serializers import (AuthSignUpSerializer, AuthTokenSerializer,
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = (IsAdminOrStaffPermission,)
+    permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (SearchFilter,)
     search_fields = ("=username",)
     lookup_field = "username"
@@ -34,7 +34,7 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(
         detail=False,
         methods=["GET", "PATCH"],
-        permission_classes=(IsUserForSelfPermission,)
+        permission_classes=(IsOwnerOrReadOnly,)
     )
     def me(self, request):
         if request.method == "PATCH":
@@ -108,7 +108,7 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = None
 
 
-class IngredientsViewSet(ReadOnlyModelViewSet):
+class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
     """Вьюсет для отображения ингредиентов."""
     permission_classes = (IsAdminOrReadOnly,)
     queryset = Ingredient.objects.all()
@@ -141,19 +141,19 @@ class RecipeViewSet(viewsets.ModelViewSet):
     Для запросов на изменение используется RecipeWriteSerializer"""
 
     queryset = Recipe.objects.all()
-    permission_classes = (AuthorOrReadOnly,)
+    permission_classes = (IsOwnerOrReadOnly,)
     serializer_class = RecipeReadSerializer
     filterset_class = RecipeFilter
     pagination_class = LimitPageNumberPagination
 
     def get_serializer_class(self):
-        if self.request.method in ('POST', 'PUT', 'PATCH'):
+        if self.request.method in ("POST", "PUT", "PATCH"):
             return RecipeWriteSerializer
         return RecipeReadSerializer
 
     @decorators.action(
         detail=True,
-        methods=['POST', 'DELETE'],
+        methods=["POST", "DELETE"],
         permission_classes=[permissions.IsAuthenticated]
     )
     def favorite(self, request, pk):
@@ -163,26 +163,26 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @decorators.action(
         detail=True,
-        methods=['POST', 'DELETE'],
+        methods=["POST", "DELETE"],
         permission_classes=[permissions.IsAuthenticated]
     )
     def shopping_cart(self, request, pk):
         """Добавляем/удаляем рецепт в 'список покупок'"""
         return add_and_del(
-            AddShoppingListRecipeSerializer, ShoppingCart, request, pk
+            AddShoppingListRecipeSerializer, Foodbasket, request, pk
         )
 
     @decorators.action(
         detail=False,
-        methods=['GET'],
+        methods=["GET"],
         permission_classes=[permissions.IsAuthenticated]
     )
     def download_shopping_cart(self, request):
         ingredients = RecipeIngredient.objects.filter(
             recipe__shopping_list__user=self.request.user
         ).values(
-            'ingredient__name',
-            'ingredient__measurement_unit'
-        ).order_by('ingredient__name').annotate(amount=Sum('amount'))
+            "ingredient__name",
+            "ingredient__measurement_unit"
+        ).order_by("ingredient__name").annotate(amount=Sum("amount"))
         return out_list_ingredients(self, request, ingredients)
     
