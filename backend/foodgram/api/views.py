@@ -1,20 +1,26 @@
 
 from django.shortcuts import get_object_or_404
-from rest_framework import status, viewsets
+from rest_framework import decorators, permissions, status, viewsets
 from rest_framework.decorators import action, api_view
 from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from users.models import Follow, User
-
-from .permissions import (IsAdmin, IsAdminOrStaffPermission,
-                          IsAuthorOrReadOnly, IsModerator,
-                          IsUserForSelfPermission, ReadOnly)
+from django.conf import settings
+from django.db.models import Sum
+from urllib.parse import unquote
+from reportlab.pdfgen import canvas
+from api.models import (Favorite, Ingredient, RecipeIngredient, Recipe,
+                        Tag)
+from .utils import add_and_del, out_list_ingredients
+from .pagination import LimitPageNumberPagination
+from .permissions import (IsAdminOrReadOnly,)
 from .serializers import (AuthSignUpSerializer, AuthTokenSerializer,
-                          CategorySerializer, CommentSerializer,
-                          GenreSerializer, ReviewSerializer,
-                          TitleReadSerializer, TitleSerializer,
-                          TitleWriteSerializer, UserSerializer)
+                          AddFavoriteRecipeSerializer,
+                          AddShoppingListRecipeSerializer, FollowSerializer,
+                          IngredientSerializer, RecipeReadSerializer,
+                          RecipeWriteSerializer, TagSerializer, UserSerializer,
+                          CropRecipeSerializer)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -98,7 +104,85 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    permission_classes = (permissions.AllowAny,)
+    permission_classes = (IsAdminOrReadOnly,)
     pagination_class = None
 
+
+class IngredientsViewSet(ReadOnlyModelViewSet):
+    """Вьюсет для отображения ингредиентов."""
+    permission_classes = (IsAdminOrReadOnly,)
+    queryset = Ingredient.objects.all()
+    serializer_class = IngredientSerializer
+    filter_backends = (IngredientSearchFilter,)
+    search_fields = ('^name',)
+    
+    def get_queryset(self):
+        """Получение ингредиентов в соответствии с запросом."""
+        name = self.request.query_params.get('name')
+        queryset = self.queryset
+        if name:
+            if name[0] == '%':
+                name = unquote(name)
+            else:
+                name = name.translate(settings.INCORRECT_LAYOUT)
+            name = name.lower()
+            start_queryset = list(queryset.filter(name__istartswith=name))
+            ingridients_set = set(start_queryset)
+            cont_queryset = queryset.filter(name__icontains=name)
+            start_queryset.extend(
+                [ing for ing in cont_queryset if ing not in ingridients_set]
+            )
+            queryset = start_queryset
+        return queryset
+    
+class RecipeViewSet(viewsets.ModelViewSet):
+    """Вьюсет для отображения рецептов.
+    Для запросов на чтение используется RecipeReadSerializer
+    Для запросов на изменение используется RecipeWriteSerializer"""
+
+    queryset = Recipe.objects.all()
+    permission_classes = (AuthorOrReadOnly,)
+    serializer_class = RecipeReadSerializer
+    filterset_class = RecipeFilter
+    pagination_class = LimitPageNumberPagination
+
+    def get_serializer_class(self):
+        if self.request.method in ('POST', 'PUT', 'PATCH'):
+            return RecipeWriteSerializer
+        return RecipeReadSerializer
+
+    @decorators.action(
+        detail=True,
+        methods=['POST', 'DELETE'],
+        permission_classes=[permissions.IsAuthenticated]
+    )
+    def favorite(self, request, pk):
+        return add_and_del(
+            AddFavoriteRecipeSerializer, Favorite, request, pk
+        )
+
+    @decorators.action(
+        detail=True,
+        methods=['POST', 'DELETE'],
+        permission_classes=[permissions.IsAuthenticated]
+    )
+    def shopping_cart(self, request, pk):
+        """Добавляем/удаляем рецепт в 'список покупок'"""
+        return add_and_del(
+            AddShoppingListRecipeSerializer, ShoppingCart, request, pk
+        )
+
+    @decorators.action(
+        detail=False,
+        methods=['GET'],
+        permission_classes=[permissions.IsAuthenticated]
+    )
+    def download_shopping_cart(self, request):
+        ingredients = RecipeIngredient.objects.filter(
+            recipe__shopping_list__user=self.request.user
+        ).values(
+            'ingredient__name',
+            'ingredient__measurement_unit'
+        ).order_by('ingredient__name').annotate(amount=Sum('amount'))
+        return out_list_ingredients(self, request, ingredients)
     

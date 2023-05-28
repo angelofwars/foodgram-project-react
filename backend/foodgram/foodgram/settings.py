@@ -129,7 +129,7 @@ USE_I18N = True
 
 USE_TZ = True
 
-QUERY_SET_LENGTH = 60
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
@@ -166,3 +166,9 @@ INGREDIENT_MIN_AMOUNT_ERROR = (
     'Количество ингредиентов не может быть меньше {min_value}!'
 )
 QUERY_SET_LENGTH = 60
+INCORRECT_LAYOUT = str.maketrans(
+    'qwertyuiop[]asdfghjkl;\'zxcvbnm,./',
+    'йцукенгшщзхъфывапролджэячсмитьбю.'
+)
+ALREADY_BUY = 'Вы уже добавили рецепт в список покупок.'
+
