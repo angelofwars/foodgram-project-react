@@ -51,6 +51,8 @@ INSTALLED_APPS = [
     'user.apps.UserConfig',
     'api.apps.ApiConfig',
     'recipes.apps.RecipesConfig',
+    'drf_spectacular',
+    'drf_spectacular_sidecar',  # required for Django collectstatic discovery
 
 ]
 
@@ -148,6 +150,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 SIMPLE_JWT = {
@@ -157,6 +160,14 @@ SIMPLE_JWT = {
 }
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Foodgram - сеть для возможности поделиться рецептами",
+    "DESCRIPTION": "Your project description",
+    "VERSION": '1.0.0',
+    "SERVE_INCLUDE_SCHEMA": False,
+    # OTHER SETTINGS
+}
 
 # Далее вынесены постоянные которые нужны для работы проекта
 # ----------------------------------------------------------------------------
@@ -171,4 +182,6 @@ INCORRECT_LAYOUT = str.maketrans(
     'йцукенгшщзхъфывапролджэячсмитьбю.'
 )
 ALREADY_BUY = 'Вы уже добавили рецепт в список покупок.'
+# ADMIN_EMAIL = admingmail.com
+RECIPE_IN_FAVORITE = 'Вы уже добавили рецепт в избранное.'
 

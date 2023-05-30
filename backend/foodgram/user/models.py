@@ -11,14 +11,12 @@ from .validators import validate_username, validate_year
 
 class User(AbstractUser):
 
-    USER = 'user'
-    MODERATOR = 'moderator'
-    ADMIN = 'admin'
+    USER = "user"
+    ADMIN = "admin"
 
     USER_ROLE_CHOICES = (
-        (USER, 'Пользователь'),
-        (MODERATOR, 'Модератор'),
-        (ADMIN, 'Админ'),
+        (USER, "Пользователь"),
+        (ADMIN, "Админ"),
     )
 
     role = models.PositiveSmallIntegerField(
@@ -112,13 +110,13 @@ class User(AbstractUser):
         send_mail(subject, message, from_email, [self.email], **kwargs)
 
     class Meta:
-        ordering = ('id',)
-        verbose_name = 'Пользователь'
-        verbose_name_plural = 'Пользователи'
+        ordering = ("id",)
+        verbose_name = "Пользователь"
+        verbose_name_plural = "Пользователи"
         constraints = [
             models.UniqueConstraint(
-                fields=['username', 'email'],
-                name='unique_username_email'
+                fields=["username", "email"],
+                name="unique_username_email"
             )
         ]
 
@@ -127,31 +125,37 @@ class User(AbstractUser):
 
 
 class Follow(models.Model):
-    """Модель подписки на подписки"""
+    """Модель подписчика."""
+
     user = models.ForeignKey(
         User,
-        verbose_name="Пользователь добавлен в избранное",
         on_delete=models.CASCADE,
-        related_name="follower",
-        help_text="follower",
+        related_name='follower',
+        verbose_name='Подписчик',
     )
 
     author = models.ForeignKey(
         User,
-        verbose_name="Автор",
         on_delete=models.CASCADE,
-        related_name="author"
-        help_text="автор"
+        related_name='following',
+        verbose_name='Автор',
     )
 
     class Meta:
-        ordering = ('id',)
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
+        ordering = ('user',)
         constraints = [
             models.UniqueConstraint(
-                fields=('user', 'author',),
-                name='unique_follow',
+                fields=['user', 'author'],
+                name='unique_follow'
             ),
+            models.CheckConstraint(
+                check=~models.Q(author=models.F('user')),
+                name='no_self_follow'
+            )
         ]
+
+    def __str__(self):
+        return f'Пользователь {self.user} подписан на {self.author}'
         

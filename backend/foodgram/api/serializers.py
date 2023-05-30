@@ -5,7 +5,7 @@ from rest_framework import (exceptions, fields, relations, serializers, status,
                             validators)
 
 from recipes.models import (Favorite, Ingredient, RecipeIngredient, Recipe,
-                            ShoppingCart, Tag)
+                            Tag, Foodbasket)
 from user.models import Follow, User
 
 
@@ -201,8 +201,8 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         ingredients_list = validated_data.pop('ingredients')
-        tags = validated_data.pop('tags')
-        author = self.context.get('request').user
+        tags = validated_data.pop("tags")
+        author = self.context.get("request").user
         recipe = Recipe.objects.create(author=author, **validated_data)
         recipe.save()
         recipe.tags.set(tags)
@@ -211,8 +211,8 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def update(self, instance, validated_data):
-        tags = validated_data.pop('tags')
-        ingredients = validated_data.pop('ingredients')
+        tags = validated_data.pop("tags")
+        ingredients = validated_data.pop("ingredients")
         instance.tags.clear()
         instance.tags.set(tags)
         instance.ingredients.clear()
@@ -222,27 +222,27 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     def validate_ingredients(self, value):
         """Проверяем ингредиенты в рецепте."""
-        ingredients = self.initial_data.get('ingredients')
+        ingredients = self.initial_data.get("ingredients")
         if len(ingredients) <= 0:
             raise exceptions.ValidationError(
-                {'ingredients': settings.INGREDIENT_MIN_AMOUNT_ERROR}
+                {"ingredients": settings.INGREDIENT_MIN_AMOUNT_ERROR}
             )
         ingredients_list = []
         for item in ingredients:
-            if item['id'] in ingredients_list:
+            if item["id"] in ingredients_list:
                 raise exceptions.ValidationError(
-                    {'ingredients': settings.INGREDIENT_DUBLICATE_ERROR}
+                    {"ingredients": settings.INGREDIENT_DUBLICATE_ERROR}
                 )
             ingredients_list.append(item['id'])
-            if int(item['amount']) <= 0:
+            if int(item["amount"]) <= 0:
                 raise exceptions.ValidationError(
-                    {'amount': settings.INGREDIENT_MIN_AMOUNT_ERROR}
+                    {"amount": settings.INGREDIENT_MIN_AMOUNT_ERROR}
                 )
         return value
 
     def validate_cooking_time(self, data):
         """Проверяем время приготовления рецепта."""
-        cooking_time = self.initial_data.get('cooking_time')
+        cooking_time = self.initial_data.get("cooking_time")
         if int(cooking_time) <= 0:
             raise serializers.ValidationError(
                 settings.COOKING_TIME_MIN_ERROR
@@ -254,20 +254,20 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         tags = value
         if not tags:
             raise exceptions.ValidationError(
-                {'tags': settings.TAG_ERROR}
+                {"tags": settings.TAG_ERROR}
             )
         tags_list = []
         for tag in tags:
             if tag in tags_list:
                 raise exceptions.ValidationError(
-                    {'tags': settings.TAG_UNIQUE_ERROR}
+                    {"tags": settings.TAG_UNIQUE_ERROR}
                 )
             tags_list.append(tag)
         return value
 
     def to_representation(self, instance):
         request = self.context.get('request')
-        context = {'request': request}
+        context = {"request": request}
         return RecipeReadSerializer(instance,
                                     context=context).data
 
@@ -277,20 +277,20 @@ class AddFavoriteRecipeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Favorite
-        fields = ('user', 'recipe')
+        fields = ("user", "recipe")
         validators = [
             validators.UniqueTogetherValidator(
                 queryset=Favorite.objects.all(),
-                fields=['user', 'recipe'],
+                fields=["user", "recipe"],
                 message=settings.RECIPE_IN_FAVORITE
             )
         ]
 
     def to_representation(self, instance):
-        request = self.context.get('request')
+        request = self.context.get("request")
         return CropRecipeSerializer(
             instance.recipe,
-            context={'request': request}
+            context={"request": request}
         ).data
 
 
@@ -298,19 +298,19 @@ class AddShoppingListRecipeSerializer(AddFavoriteRecipeSerializer):
     """Сериализатор добавления рецептов в список покупок."""
 
     class Meta(AddFavoriteRecipeSerializer.Meta):
-        model = ShoppingCart
+        model = Foodbasket
         validators = [
             validators.UniqueTogetherValidator(
-                queryset=ShoppingCart.objects.all(),
-                fields=['user', 'recipe'],
+                queryset=Foodbasket.objects.all(),
+                fields=["user", "recipe"],
                 message=settings.ALREADY_BUY
             )
         ]
 
     def to_representation(self, instance):
-        request = self.context.get('request')
+        request = self.context.get("request")
         return CropRecipeSerializer(
             instance.recipe,
-            context={'request': request}
+            context={"request": request}
         ).data
     

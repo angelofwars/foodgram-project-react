@@ -1,14 +1,15 @@
 from pathlib import Path
 from datetime import datetime as dt
-
+from django.conf import settings
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.shortcuts import HttpResponse
 from rest_framework import response, status
 from rest_framework.generics import get_object_or_404
-
+from django.core.mail import send_mail
 from recipes.models import Recipe
-
+from user.models import User
+import uuid
 
 def add_and_del(add_serializer, model, request, recipe_id):
     """Опция добавления и удаления рецепта."""
@@ -60,3 +61,15 @@ def out_list_ingredients(self, request, ingredients):
     )
     response['Content-Disposition'] = f'attachment; filename={filename}'
     return response
+
+def send_confirmation_code(username):
+    user = get_object_or_404(User, username=username)
+    confirmation_code = str(uuid.uuid4)
+    user.confirmation_code = confirmation_code
+    send_mail(
+        'Код подтвержения для завершения регистрации',
+        f'Ваш код для получения JWT токена {user.confirmation_code}',
+        settings.ADMIN_EMAIL,
+        [user.email],
+        fail_silently=False,
+    )

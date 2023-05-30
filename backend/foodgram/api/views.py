@@ -5,18 +5,17 @@ from rest_framework.decorators import action, api_view
 from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from users.models import Follow, User
+from user.models import Follow, User
 from django.conf import settings
 from django.db.models import Sum
 from urllib.parse import unquote
-from reportlab.pdfgen import canvas
+from .filters import RecipeFilter, IngredientSearchFilter
 from recipes.models import (Favorite, Ingredient, RecipeIngredient, Recipe,
                         Tag, Foodbasket)
-from .utils import add_and_del, out_list_ingredients
+from .utils import add_and_del, out_list_ingredients, send_confirmation_code
 from .pagination import LimitPageNumberPagination
 from .permissions import IsOwnerOrReadOnly, IsAdminOrReadOnly
-from .serializers import (AuthSignUpSerializer, AuthTokenSerializer,
-                          AddFavoriteRecipeSerializer,
+from .serializers import (AddFavoriteRecipeSerializer,
                           AddShoppingListRecipeSerializer, FollowSerializer,
                           IngredientSerializer, RecipeReadSerializer,
                           RecipeWriteSerializer, TagSerializer, UserSerializer,
@@ -98,6 +97,7 @@ def users_get_token(request):
         "Код подтверждения неверный", status=status.HTTP_400_BAD_REQUEST
     )
 
+    
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     """Вьюсет для отображения тегов."""
@@ -114,7 +114,7 @@ class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     filter_backends = (IngredientSearchFilter,)
-    search_fields = ('^name',)
+    search_fields = ("^name",)
     
     def get_queryset(self):
         """Получение ингредиентов в соответствии с запросом."""
