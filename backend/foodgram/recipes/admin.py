@@ -24,6 +24,7 @@ class IngredientInRecipeInline(admin.TabularInline):
     extra = 2
     min_num = 1
 
+
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     list_display = ('name', 'author', 'count_favorites')
@@ -35,6 +36,5 @@ class RecipeAdmin(admin.ModelAdmin):
 
 @admin.register(Foodbasket)
 class FoodbasketAdmin(admin.ModelAdmin):
-    list_display = ("user", "recipe", )
+    list_display = ("user", "recipe",)
     empty_value_display = "-пусто-"
-

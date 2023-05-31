@@ -3,10 +3,11 @@ from django.db import models, transaction
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import (exceptions, fields, relations, serializers, status,
                             validators)
-
+from django.shortcuts import get_object_or_404
 from recipes.models import (Favorite, Ingredient, RecipeIngredient, Recipe,
                             Tag, Foodbasket)
 from user.models import Follow, User
+from rest_framework.exceptions import ValidationError
 
 
 class CropRecipeSerializer(serializers.ModelSerializer):
@@ -22,7 +23,7 @@ class CropRecipeSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    """Сериализатор для авторизованных и 
+    """Сериализатор для авторизованных и
     не аворизованных пользователей."""
 
     class Meta:
@@ -30,7 +31,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = (
             "username", "email", "first_name", "last_name", "bio", "role"
         )
-    
+
     def get_is_subscribed(self, author):
         """Проверка подписки пользователей."""
         request = self.context.get("request")
@@ -81,7 +82,6 @@ class FollowSerializer(UserSerializer):
         return serializer.data
 
 
-
 class TagSerializer(serializers.ModelSerializer):
     """ Сериализатор для модели Tag."""
 
@@ -129,8 +129,8 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
     author = UserSerializer(read_only=True)
     ingredients = RecipeIngredient(many=True,
-                                               required=True,
-                                               source="ingredient_list")
+                                   required=True,
+                                   source="ingredient_list")
     image = Base64ImageField()
     is_favorited = fields.SerializerMethodField(read_only=True)
     is_in_shopping_cart = fields.SerializerMethodField(read_only=True)
@@ -313,4 +313,26 @@ class AddShoppingListRecipeSerializer(AddFavoriteRecipeSerializer):
             instance.recipe,
             context={"request": request}
         ).data
-    
+
+
+class AuthSignUpSerializer(serializers.ModelSerializer):
+
+    def validate(self, data):
+        username = data.get('username')
+        if not User.objects.filter(username=username).exists():
+            if username == 'me':
+                raise ValidationError('Username указан неверно!')
+            return data
+        user = get_object_or_404(User, username=username)
+        if data.get('email') != user.email:
+            raise ValidationError('Почта указана неверно!')
+        return data
+
+    class Meta:
+        model = User
+        fields = ('email', 'username')
+
+
+class AuthTokenSerializer(serializers.Serializer):
+    username = serializers.CharField(max_length=150)
+    confirmation_code = serializers.CharField(max_length=50)

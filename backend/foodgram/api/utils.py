@@ -11,6 +11,7 @@ from recipes.models import Recipe
 from user.models import User
 import uuid
 
+
 def add_and_del(add_serializer, model, request, recipe_id):
     """Опция добавления и удаления рецепта."""
     user = request.user
@@ -61,6 +62,7 @@ def out_list_ingredients(self, request, ingredients):
     )
     response['Content-Disposition'] = f'attachment; filename={filename}'
     return response
+
 
 def send_confirmation_code(username):
     user = get_object_or_404(User, username=username)

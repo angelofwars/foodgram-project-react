@@ -13,8 +13,6 @@ class Ingredient(models.Model):
         max_length=100,
         help_text="Ингридиенты"
     )
-    # franchise = models.ForeignKey(Franchise)
-    # diets = models.ManyToManyField(Diet, null=True, blank=True, verbose_name="special diets or food allergies")
     measurement_unit = models.CharField(
         verbose_name="Единица измерения",
         max_length=200,
@@ -74,29 +72,28 @@ class Tag(models.Model):
         return self.name
 
 
-
 class Recipe(models.Model):
     """Модель рецепта"""
     author = models.ForeignKey(
-        User, 
+        User,
         on_delete=models.CASCADE,
         related_name="recipes",
         verbose_name="Автор рецепта")
-    
+
     name = models.CharField(
         max_length=200,
         verbose_name="Название рецепта"
-        )
-    
+    )
+
     image = models.ImageField(
         upload_to="recipes/",
         verbose_name="Картинка рецепта"
-        )
-    
+    )
+
     text = models.TextField(
         verbose_name="Описание рецепта"
-        )
-    
+    )
+
     ingredients = models.ManyToManyField(
         Ingredient,
         through="RecipeIngredient",
@@ -119,9 +116,6 @@ class Recipe(models.Model):
         ordering = ["-id"]
         verbose_name = "Рецепт"
         verbose_name_plural = "Рецепты"
-
-
-
 
 
 class RecipeIngredient(models.Model):
@@ -169,9 +163,9 @@ class RecipeIngredient(models.Model):
             ),
         ]
 
-
     def __str__(self):
         return f'{self.ingredient} в {self.ingredient.measurement_unit}'
+
 
 class Favorite(models.Model):
     """Модель избранного"""
@@ -231,4 +225,3 @@ class Foodbasket(models.Model):
                 name="unique_shoppingcart",
             ),
         ]
-        

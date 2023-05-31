@@ -1,16 +1,12 @@
-
 from django.contrib.auth.models import AbstractUser
 from django.core.mail import send_mail
 from django.db import models
-from django.db.models import (SET_NULL, CharField, EmailField, ForeignKey,
-                              ManyToManyField, PositiveSmallIntegerField,
-                              SlugField, TextField)
+from django.db.models import (CharField, EmailField,)
 
-from .validators import validate_username, validate_year
+from .validators import validate_username
 
 
 class User(AbstractUser):
-
     USER = "user"
     ADMIN = "admin"
 
@@ -158,4 +154,3 @@ class Follow(models.Model):
 
     def __str__(self):
         return f'Пользователь {self.user} подписан на {self.author}'
-        

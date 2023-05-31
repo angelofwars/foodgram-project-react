@@ -1,25 +1,25 @@
-
 from django.shortcuts import get_object_or_404
 from rest_framework import decorators, permissions, status, viewsets
 from rest_framework.decorators import action, api_view
 from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from user.models import Follow, User
+from user.models import User
 from django.conf import settings
 from django.db.models import Sum
 from urllib.parse import unquote
 from .filters import RecipeFilter, IngredientSearchFilter
 from recipes.models import (Favorite, Ingredient, RecipeIngredient, Recipe,
-                        Tag, Foodbasket)
+                            Tag, Foodbasket)
 from .utils import add_and_del, out_list_ingredients, send_confirmation_code
 from .pagination import LimitPageNumberPagination
 from .permissions import IsOwnerOrReadOnly, IsAdminOrReadOnly
 from .serializers import (AddFavoriteRecipeSerializer,
-                          AddShoppingListRecipeSerializer, FollowSerializer,
+                          AddShoppingListRecipeSerializer,
                           IngredientSerializer, RecipeReadSerializer,
                           RecipeWriteSerializer, TagSerializer, UserSerializer,
-                          CropRecipeSerializer)
+                          AuthSignUpSerializer,
+                          AuthTokenSerializer)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -97,7 +97,6 @@ def users_get_token(request):
         "Код подтверждения неверный", status=status.HTTP_400_BAD_REQUEST
     )
 
-    
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     """Вьюсет для отображения тегов."""
@@ -115,7 +114,7 @@ class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IngredientSerializer
     filter_backends = (IngredientSearchFilter,)
     search_fields = ("^name",)
-    
+
     def get_queryset(self):
         """Получение ингредиентов в соответствии с запросом."""
         name = self.request.query_params.get('name')
@@ -134,7 +133,8 @@ class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
             )
             queryset = start_queryset
         return queryset
-    
+
+
 class RecipeViewSet(viewsets.ModelViewSet):
     """Вьюсет для отображения рецептов.
     Для запросов на чтение используется RecipeReadSerializer
@@ -185,4 +185,3 @@ class RecipeViewSet(viewsets.ModelViewSet):
             "ingredient__measurement_unit"
         ).order_by("ingredient__name").annotate(amount=Sum("amount"))
         return out_list_ingredients(self, request, ingredients)
-    

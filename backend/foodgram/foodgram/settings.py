@@ -38,7 +38,6 @@ DEBUG = os.getenv('DEBUG', default=True)
 HOSTS_FROM_ENV = [os.getenv('ALLOWED_HOSTS', default='localhost').split(' ')]
 ALLOWED_HOSTS = HOSTS_FROM_ENV
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -101,7 +100,7 @@ WSGI_APPLICATION = 'foodgram.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.sqlite3'),
-        'NAME': os.environ.get('POSTGRES_DB', BASE_DIR / 'db.sqlite3'),
+        'NAME': os.environ.get('DB_NAME', BASE_DIR / 'db.sqlite3'),
         'USER': os.environ.get('POSTGRES_USER'),
         'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
         'HOST': os.environ.get('DB_HOST'),
@@ -148,10 +147,8 @@ STATIC_ROOT = BASE_DIR / 'static'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
-
 
 
 # Default primary key field type
@@ -221,4 +218,3 @@ INCORRECT_LAYOUT = str.maketrans(
 ALREADY_BUY = 'Вы уже добавили рецепт в список покупок.'
 # ADMIN_EMAIL = admingmail.com
 RECIPE_IN_FAVORITE = 'Вы уже добавили рецепт в избранное.'
-

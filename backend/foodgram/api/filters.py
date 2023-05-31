@@ -4,6 +4,7 @@ from recipes.models import Recipe
 from user.models import User
 from rest_framework.filters import SearchFilter
 
+
 class IngredientSearchFilter(SearchFilter):
     search_param = "name"
 
