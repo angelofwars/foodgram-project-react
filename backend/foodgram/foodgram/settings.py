@@ -11,9 +11,9 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 import os
-from datetime import timedelta
+
 from pathlib import Path
-from decouple import Csv, config
+
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -27,13 +27,13 @@ load_dotenv(os.path.join(BASE_DIR.parent.parent, 'infra/.env'), verbose=True)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 
-SECRET_KEY = config(
+SECRET_KEY = os.getenv(
     "SECRET_KEY",
     default="django-insecure-5ea!e__0^n_kk=_$n(te@1_$!j-at2k&*16mwb40b2-d@()g7n"
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', cast=bool, default=True)
+DEBUG = os.getenv('DEBUG', default=True)
 
 HOSTS_FROM_ENV = [os.getenv('ALLOWED_HOSTS', default='localhost').split(' ')]
 ALLOWED_HOSTS = HOSTS_FROM_ENV
