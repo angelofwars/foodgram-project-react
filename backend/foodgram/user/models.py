@@ -19,13 +19,13 @@ class User(AbstractUser):
         (ADMIN, "Админ"),
     )
 
-    role = models.PositiveSmallIntegerField(
-        'Роль',
-        choices=USER_ROLE_CHOICES,
-        default=USER,
-        blank=True,
-        null=True
-    )
+    # role = models.PositiveSmallIntegerField(
+    #     'Роль',
+    #     choices=USER_ROLE_CHOICES,
+    #     default=USER,
+    #     blank=True,
+    #     null=True
+    # )
     username = models.CharField(
         'Никнейм',
         validators=(validate_username,),
