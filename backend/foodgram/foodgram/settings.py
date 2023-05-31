@@ -33,9 +33,11 @@ SECRET_KEY = config(
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', cast=bool, default=True)
 
-ALLOWED_HOSTS = []
+HOSTS_FROM_ENV = [os.getenv('ALLOWED_HOSTS', default='localhost').split(' ')]
+ALLOWED_HOSTS = HOSTS_FROM_ENV
+
 
 # Application definition
 
