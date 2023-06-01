@@ -2,9 +2,12 @@ version: '3.3'
 services:
 
   frontend:
-    image: angelofwars/frontend:lastest
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
     volumes:
       - ../frontend/:/app/result_build/
+
 
   db:
     image: postgres:13.0-alpine
@@ -16,28 +19,36 @@ services:
       - ./.env
 
   backend:
-    image: angelofwars/backend:lastest
+    build:
+      context: ../backend
+      dockerfile: ../backend/Dockerfile
+      # Когда будешь писать воркфлоу для гитхаба,
+      # секцию build нужно будет удалить и заменить на что-то вида
+      # image: ТВОЙ_ЮЗЕРНЭЙМ_НА_ДОКЕРХАБЕ/foodgram_backend:latest
     restart: always
     volumes:
-      - static_value:/app/backend_static/
-      - media_value:/app/backend_media/
+      - static_value:/app/static/
+      - media_value:/app/media/
     depends_on:
       - db
     env_file:
       - ./.env
 
+
   nginx:
-    image: nginx:1.19.3
+    image: nginx:1.21.3-alpine
     ports:
       - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
       - ../frontend/build:/usr/share/nginx/html/
-      - ./docs:/usr/share/nginx/html/api/docs/
-      - static_value:/var/html/backend_static/
-      - media_value:/var/html/backend_media/
+      - ../docs/:/usr/share/nginx/html/api/docs/
+      - static_value:/var/html/static/
+      - media_value:/var/html/media/
     depends_on:
+      - frontend
       - backend
+
 
 volumes:
   postgres_data:

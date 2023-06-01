@@ -8,6 +8,7 @@ from recipes.models import (Favorite, Ingredient, RecipeIngredient, Recipe,
                             Tag, Foodbasket)
 from user.models import Follow, User
 from rest_framework.exceptions import ValidationError
+from rest_framework.fields import SerializerMethodField
 
 
 class CropRecipeSerializer(serializers.ModelSerializer):
@@ -26,17 +27,18 @@ class UserSerializer(serializers.ModelSerializer):
     """Сериализатор для авторизованных и
     не аворизованных пользователей."""
 
+    is_subscribed = SerializerMethodField(read_only=True)
+
     class Meta:
         model = User
-        fields = (
-            "username", "email", "first_name", "last_name", "bio", "role"
-        )
+        fields = ('id', 'email', 'username', 'first_name',
+                  'last_name', 'is_subscribed')
 
-    def get_is_subscribed(self, author):
-        """Проверка подписки пользователей."""
-        request = self.context.get("request")
-        return (request and request.user.is_authenticated
-                and request.user.follower.filter(author=author).exists())
+    def get_is_subscribed(self, obj):
+        user = self.context.get('request').user
+        if user.is_anonymous:
+            return False
+        return Follow.objects.filter(user=user, author=obj).exists()
 
 
 class FollowSerializer(UserSerializer):

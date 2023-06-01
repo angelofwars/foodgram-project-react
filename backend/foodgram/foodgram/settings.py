@@ -36,7 +36,7 @@ SECRET_KEY = os.getenv(
 DEBUG = os.getenv('DEBUG', default=True)
 
 HOSTS_FROM_ENV = [os.getenv('ALLOWED_HOSTS', default='localhost').split(' ')]
-ALLOWED_HOSTS = HOSTS_FROM_ENV
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -58,7 +58,6 @@ INSTALLED_APPS = [
     'api.apps.ApiConfig',
     'recipes.apps.RecipesConfig',
     'drf_spectacular',
-    'drf_spectacular_sidecar',  # required for Django collectstatic discovery
 
 ]
 

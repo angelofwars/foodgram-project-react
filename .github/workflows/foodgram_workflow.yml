@@ -46,7 +46,7 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/backend:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/backenddb:lastest
 
   deploy:
     runs-on: ubuntu-latest

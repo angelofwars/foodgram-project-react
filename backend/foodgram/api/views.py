@@ -4,7 +4,9 @@ from rest_framework.decorators import action, api_view
 from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from user.models import User
+from user.models import User, Follow
+from rest_framework.permissions import IsAuthenticated
+from djoser.views import UserViewSet
 from django.conf import settings
 from django.db.models import Sum
 from urllib.parse import unquote
@@ -18,84 +20,57 @@ from .serializers import (AddFavoriteRecipeSerializer,
                           AddShoppingListRecipeSerializer,
                           IngredientSerializer, RecipeReadSerializer,
                           RecipeWriteSerializer, TagSerializer, UserSerializer,
-                          AuthSignUpSerializer,
+                          FollowSerializer,
                           AuthTokenSerializer)
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(UserViewSet):
+
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = (IsAdminOrReadOnly,)
-    filter_backends = (SearchFilter,)
-    search_fields = ("=username",)
-    lookup_field = "username"
+    pagination_class = LimitPageNumberPagination
 
-    @action(
-        detail=False,
-        methods=["GET", "PATCH"],
-        permission_classes=(IsOwnerOrReadOnly,)
-    )
-    def me(self, request):
-        if request.method == "PATCH":
-            serializer = UserSerializer(
-                request.user, data=request.data, partial=True
-            )
-            serializer.is_valid(raise_exception=True)
-            serializer.save(role=request.user.role)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        serializer = UserSerializer(request.user)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    @action(detail=False,
+            methods=['get'],
+            permission_classes=[IsAuthenticated])
+    def subscriptions(self, request):
+        user = request.user
+        queryset = User.objects.filter(following__user=user)
+        page = self.paginate_queryset(queryset)
+        serializer = FollowSerializer(page,
+                                      many=True,
+                                      context={'request': request})
+        return self.get_paginated_response(serializer.data)
 
-    def update(self, request, pk=None, **kwargs):
-        if "partial" in kwargs:
-            instance = self.get_object()
-            serializer = UserSerializer(
-                instance, data=request.data, partial=True
-            )
-            serializer.is_valid(raise_exception=True)
-            self.perform_update(serializer)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+    @action(detail=True,
+            methods=['post', 'delete'],
+            permission_classes=[IsAuthenticated])
+    def subscribe(self, request, id):
+        user = request.user
+        author = get_object_or_404(User, id=id)
+
+        if request.method == 'POST':
+            if user.id == author.id:
+                return Response({'detail': 'Нельзя подписаться на себя'},
+                                status=status.HTTP_400_BAD_REQUEST)
+            if Follow.objects.filter(author=author, user=user).exists():
+                return Response({'detail': 'Вы уже подписаны!'},
+                                status=status.HTTP_400_BAD_REQUEST)
+            Follow.objects.create(user=user, author=author)
+            serializer = FollowSerializer(author,
+                                          context={'request': request})
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        if request.method == 'DELETE':
+            if not Follow.objects.filter(user=user, author=author).exists():
+                return Response({'errors': 'Вы не подписаны'},
+                                status=status.HTTP_400_BAD_REQUEST)
+            subscription = get_object_or_404(Follow,
+                                             user=user,
+                                             author=author)
+            subscription.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-
-@api_view(["POST"])
-def users_signup(request):
-    username = request.data.get("username")
-    if not User.objects.filter(username=username).exists():
-        serializer = AuthSignUpSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        send_confirmation_code(username)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    user = get_object_or_404(User, username=username)
-    serializer = AuthSignUpSerializer(
-        user, data=request.data, partial=True
-    )
-    serializer.is_valid(raise_exception=True)
-    serializer.save()
-    send_confirmation_code(username)
-    return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-@api_view(["POST"])
-def users_get_token(request):
-    serializer = AuthTokenSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
-    username = serializer.validated_data["username"]
-    confirmation_code = serializer.validated_data["confirmation_code"]
-    try:
-        user = User.objects.get(username=username)
-    except User.DoesNotExist:
-        return Response(
-            "Пользователь не найден", status=status.HTTP_404_NOT_FOUND
-        )
-    if user.confirmation_code == confirmation_code:
-        refresh = RefreshToken.for_user(user)
-        token_data = {"token": str(refresh.access_token)}
-        return Response(token_data, status=status.HTTP_200_OK)
-    return Response(
-        "Код подтверждения неверный", status=status.HTTP_400_BAD_REQUEST
-    )
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
