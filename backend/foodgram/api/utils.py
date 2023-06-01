@@ -15,10 +15,10 @@ import uuid
 def add_and_del(add_serializer, model, request, recipe_id):
     """Опция добавления и удаления рецепта."""
     user = request.user
-    data = {'user': user.id,
-            'recipe': recipe_id}
+    data = {"user": user.id,
+            "recipe": recipe_id}
     serializer = add_serializer(data=data, context={'request': request})
-    if request.method == 'POST':
+    if request.method == "POST":
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return response.Response(serializer.data,
@@ -46,8 +46,8 @@ def out_list_ingredients(self, request, ingredients):
 
     today = dt.today()
     shopping_list = (
-        f'Список покупок для пользователя: {user.username}\n\n'
-        f'Дата: {today:%Y-%m-%d}\n\n'
+        f"Список покупок для пользователя: {user.username}\n\n"
+        f"Дата: {today:%Y-%m-%d}\n\n"
     )
     shopping_list += '\n'.join([
         f'- {ingredient["ingredient__name"]} '
@@ -55,12 +55,12 @@ def out_list_ingredients(self, request, ingredients):
         f' - {ingredient["amount"]}'
         for ingredient in ingredients
     ])
-    shopping_list += f'\n\nFoodgram ({today:%Y})'
+    shopping_list += f"\n\nFoodgram ({today:%Y})"
 
     response = HttpResponse(
-        shopping_list, content_type='text.txt; charset=utf-8'
+        shopping_list, content_type="text.txt; charset=utf-8"
     )
-    response['Content-Disposition'] = f'attachment; filename={filename}'
+    response["Content-Disposition"] = f'attachment; filename={filename}'
     return response
 
 
@@ -69,8 +69,8 @@ def send_confirmation_code(username):
     confirmation_code = str(uuid.uuid4)
     user.confirmation_code = confirmation_code
     send_mail(
-        'Код подтвержения для завершения регистрации',
-        f'Ваш код для получения JWT токена {user.confirmation_code}',
+        "Код подтвержения для завершения регистрации",
+        f"Ваш код для получения JWT токена {user.confirmation_code}",
         settings.ADMIN_EMAIL,
         [user.email],
         fail_silently=False,
