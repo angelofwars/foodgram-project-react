@@ -217,3 +217,4 @@ INCORRECT_LAYOUT = str.maketrans(
 ALREADY_BUY = 'Вы уже добавили рецепт в список покупок.'
 # ADMIN_EMAIL = admingmail.com
 RECIPE_IN_FAVORITE = 'Вы уже добавили рецепт в избранное.'
+TAG_ERROR='Вы забыли добавить тег'
