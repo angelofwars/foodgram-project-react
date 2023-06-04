@@ -1,9 +1,7 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import decorators, permissions, status, viewsets
-from rest_framework.decorators import action, api_view
-from rest_framework.filters import SearchFilter
+from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
 from user.models import User, Follow
 from rest_framework.permissions import IsAuthenticated
 from djoser.views import UserViewSet
@@ -13,7 +11,7 @@ from urllib.parse import unquote
 from .filters import RecipeFilter, IngredientSearchFilter
 from recipes.models import (Favorite, Ingredient, RecipeIngredient, Recipe,
                             Tag, Foodbasket)
-from .utils import add_and_del, out_list_ingredients, send_confirmation_code
+from .utils import add_and_del, out_list_ingredients
 from .pagination import LimitPageNumberPagination
 from .permissions import IsOwnerOrReadOnly, IsAdminOrReadOnly
 from .serializers import (AddFavoriteRecipeSerializer,
@@ -21,11 +19,10 @@ from .serializers import (AddFavoriteRecipeSerializer,
                           IngredientSerializer, RecipeReadSerializer,
                           RecipeWriteSerializer, TagSerializer, UserSerializer,
                           FollowSerializer,
-                          AuthTokenSerializer)
+                          )
 
 
 class UserViewSet(UserViewSet):
-
     queryset = User.objects.all()
     serializer_class = UserSerializer
     pagination_class = LimitPageNumberPagination

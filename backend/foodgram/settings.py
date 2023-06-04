@@ -13,19 +13,13 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 
 from pathlib import Path
-
+from decouple import config
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(os.path.join(BASE_DIR.parent.parent, 'infra/.env'), verbose=True)
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
+ROOT_URLCONF = 'foodgram.urls'
 
 SECRET_KEY = os.getenv(
     "SECRET_KEY",
@@ -98,12 +92,18 @@ WSGI_APPLICATION = 'foodgram.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.sqlite3'),
-        'NAME': os.environ.get('DB_NAME', BASE_DIR / 'db.sqlite3'),
-        'USER': os.environ.get('POSTGRES_USER'),
-        'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
-        'HOST': os.environ.get('DB_HOST'),
-        'PORT': os.environ.get('DB_PORT'),
+        'ENGINE': config(
+            'DB_ENGINE', default='django.db.backends.postgresql'),
+        'NAME': config(
+            'DB_NAME', default='postgres'),
+        'USER': config(
+            'POSTGRES_USER', default='postgres'),
+        'PASSWORD': config(
+            'POSTGRES_PASSWORD', default='postgres'),
+        'HOST': config(
+            'DB_HOST', default='127.0.0.1'),
+        'PORT': config(
+            'DB_PORT', default=5432, cast=int)
     }
 }
 
@@ -201,7 +201,13 @@ SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False,
     # OTHER SETTINGS
 }
+STATIC_URL = '/static/'
+# STATICFILES_DIRS необходимо закомментировать или удалить
+# STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static/'),)
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Далее вынесены постоянные которые нужны для работы проекта
 # ----------------------------------------------------------------------------
 # Constant values
@@ -217,4 +223,4 @@ INCORRECT_LAYOUT = str.maketrans(
 ALREADY_BUY = 'Вы уже добавили рецепт в список покупок.'
 # ADMIN_EMAIL = admingmail.com
 RECIPE_IN_FAVORITE = 'Вы уже добавили рецепт в избранное.'
-TAG_ERROR='Вы забыли добавить тег'
+TAG_ERROR = 'Вы забыли добавить тег'

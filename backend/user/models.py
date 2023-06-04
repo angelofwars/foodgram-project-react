@@ -1,10 +1,8 @@
 from django.contrib.auth.models import AbstractUser
-from django.core.mail import send_mail
 from django.db import models
-from django.db.models import (CharField, EmailField,)
 from django.core.validators import MinLengthValidator
-from .validators import validate_username
 from django.utils import timezone
+
 
 class User(AbstractUser):
     """Кастомная модель пользователя"""
@@ -23,7 +21,7 @@ class User(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = [
         'username', 'first_name', 'last_name'
-        ]
+    ]
 
     class Meta:
         verbose_name = 'Пользователь'
