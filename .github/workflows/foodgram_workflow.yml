@@ -74,9 +74,9 @@ jobs:
             echo SECRET_KEY=${{ secrets.ALLOWED_HOSTS }} >> .env
             sudo docker-compose up -d --build
             sudo docker-compose exec -T backend python manage.py makemigrations
-            sudo docker-compose exec -T backend python manage.py makemigrations user
-            sudo docker-compose exec -T backend python manage.py migrate --run-syncdb
-            sudo docker-compose exec -T backend python manage.py collectstatic --no-input
+#            sudo docker-compose exec -T backend python manage.py makemigrations user
+#            sudo docker-compose exec -T backend python manage.py migrate --run-syncdb
+#            sudo docker-compose exec -T backend python manage.py collectstatic --no-input
 #            sudo docker-compose exec -T backend python manage.py load_tags
 #            sudo docker-compose exec -T backend python manage.py load_data
 
