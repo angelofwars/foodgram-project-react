@@ -19,7 +19,7 @@ services:
       - .env
 
   frontend:
-    image: angelofwars/frontend:latest
+    image: angelofwars/font_foodgram:v1
     volumes:
       - ../frontend/:/app/result_build/
     depends_on:
@@ -28,7 +28,7 @@ services:
   nginx:
     image:  nginx:1.19.3
     ports:
-      - "81:80"
+      - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
       - static_value:/var/html/static_back/
