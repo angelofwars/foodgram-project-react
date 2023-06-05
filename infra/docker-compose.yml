@@ -19,7 +19,7 @@ services:
       - .env
 
   frontend:
-    image: angelofwars/font_foodgram:v1
+    image: angelofwars/frontend:lastest
     volumes:
       - ../frontend/:/app/result_build/
     depends_on:
