@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.auth.hashers import check_password
 from django.db import models, transaction
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import (exceptions, fields, relations, serializers, status,
@@ -6,9 +7,10 @@ from rest_framework import (exceptions, fields, relations, serializers, status,
 from django.shortcuts import get_object_or_404
 from recipes.models import (Favorite, Ingredient, RecipeIngredient, Recipe,
                             Tag, Foodbasket)
-from user.models import Follow, User
+from user.models import User, Subscribe
 from rest_framework.exceptions import ValidationError
-from rest_framework.fields import SerializerMethodField
+from djoser.serializers import (PasswordSerializer, UserCreateSerializer,
+                                UserSerializer)
 
 
 class CropRecipeSerializer(serializers.ModelSerializer):
@@ -23,65 +25,29 @@ class CropRecipeSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "name", "image", "cooking_time")
 
 
-class UserSerializer(serializers.ModelSerializer):
-    """Сериализатор для авторизованных и
-    не аворизованных пользователей."""
-
-    is_subscribed = SerializerMethodField(read_only=True)
+class UserListSerializer(UserSerializer):
+    """Серелайзер списка пользователей"""
+    is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ('id', 'email', 'username', 'first_name',
-                  'last_name', 'is_subscribed')
+        fields = ('email', 'id',
+                  'role',
+                  'username',
+                  'first_name',
+                  'last_name',
+                  'is_subscribed')
 
     def get_is_subscribed(self, obj):
-        user = self.context.get('request').user
-        if user.is_anonymous:
-            return False
-        return Follow.objects.filter(user=user, author=obj).exists()
+        return obj.id in self.context['subscriptions']
 
 
-class FollowSerializer(UserSerializer):
-    """Сериализатор вывода авторов на которых подписан текущий пользователь."""
-
-    recipes = serializers.SerializerMethodField(read_only=True)
-    recipes_count = serializers.SerializerMethodField(read_only=True)
-
-    class Meta(UserSerializer.Meta):
-        fields = UserSerializer.Meta.fields + ('recipes', 'recipes_count',)
-        read_only_fields = ('email', 'username', 'last_name', 'first_name',)
-
-    def validate(self, data):
-        """Проверяем наличие подписки у пользователя и отсекаем самого себя."""
-        author = self.instance
-        user = self.context.get('request').user
-        if Follow.objects.filter(user=user, author=author).exists():
-            raise exceptions.ValidationError(
-                detail=settings.DUBLICAT_USER,
-                code=status.HTTP_400_BAD_REQUEST
-            )
-        if user == author:
-            raise exceptions.ValidationError(
-                detail=settings.SELF_FOLLOW,
-                code=status.HTTP_400_BAD_REQUEST
-            )
-        return data
-
-    def get_recipes_count(self, obj):
-        """Достаем количество рецептов."""
-        return obj.recipes.count()
-
-    def get_recipes(self, obj):
-        """Достаем рецептs."""
-        request = self.context.get('request')
-        limit = request.GET.get('recipes_limit')
-        recipes = obj.recipes.all()
-        if limit:
-            recipes = recipes[:int(limit)]
-        serializer = CropRecipeSerializer(recipes,
-                                          many=True,
-                                          read_only=True)
-        return serializer.data
+class UserCreateSerializer(UserCreateSerializer):
+    """Серелайзер создания пользователя"""
+    class Meta:
+        model = User
+        fields = '__all__'
+        required_fields = '__all__'
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -272,6 +238,79 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         context = {"request": request}
         return RecipeReadSerializer(instance,
                                     context=context).data
+
+
+class SetPasswordSerializer(PasswordSerializer):
+    current_password = serializers.CharField(
+        required=True,
+        label='Текущий пароль')
+
+    def validate(self, data):
+        user = self.context.get('request').user
+        if data['new_password'] == data['current_password']:
+            raise serializers.ValidationError({
+                "new_password": settings.ERROR_EQUAL_PASSWORD})
+        check_current = check_password(data['current_password'], user.password)
+        if check_current is False:
+            raise serializers.ValidationError({
+                "current_password": settings.ERROR_WRONG_PASSWORD})
+        return data
+
+
+class SubscribeRecipeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
+
+
+class SubscribeSerializer(serializers.ModelSerializer):
+    email = serializers.CharField(
+        source='author.email',
+        read_only=True)
+    id = serializers.IntegerField(
+        source='author.id',
+        read_only=True)
+    username = serializers.CharField(
+        source='author.username',
+        read_only=True)
+    first_name = serializers.CharField(
+        source='author.first_name',
+        read_only=True)
+    last_name = serializers.CharField(
+        source='author.last_name',
+        read_only=True)
+    recipes = serializers.SerializerMethodField()
+    is_subscribed = serializers.SerializerMethodField()
+    recipes_count = serializers.ReadOnlyField(
+        source='author.recipe.count')
+
+    class Meta:
+        model = Subscribe
+        fields = ('email', 'id', 'username', 'first_name',
+                  'last_name', 'is_subscribed', 'recipes', 'recipes_count',)
+
+    def validate(self, data):
+        user = self.context.get('request').user
+        author = self.context.get('author_id')
+        if user.id == int(author):
+            raise serializers.ValidationError({
+                'errors': 'Нельзя подписаться на самого себя'})
+        if Subscribe.objects.filter(user=user, author=author).exists():
+            raise serializers.ValidationError({
+                'errors': settings.ERROR_ALREADY_FOLLOW})
+        return data
+
+    def get_recipes(self, obj):
+        recipes = obj.author.recipe.all()
+        return SubscribeRecipeSerializer(
+            recipes,
+            many=True).data
+
+    def get_is_subscribed(self, obj):
+        subscribe = obj.id in self.context['subscriptions']
+        if subscribe:
+            return True
+        return False
 
 
 class AddFavoriteRecipeSerializer(serializers.ModelSerializer):

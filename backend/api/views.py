@@ -2,12 +2,14 @@ from django.shortcuts import get_object_or_404
 from rest_framework import decorators, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from user.models import User, Follow
-from rest_framework.permissions import IsAuthenticated
+from user.models import User, Subscribe
 from djoser.views import UserViewSet
 from django.conf import settings
 from django.db.models import Sum
 from urllib.parse import unquote
+from .mixins import CreateDestroyViewSet
+from rest_framework.permissions import (SAFE_METHODS, IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 from .filters import RecipeFilter, IngredientSearchFilter
 from recipes.models import (Favorite, Ingredient, RecipeIngredient, Recipe,
                             Tag, Foodbasket)
@@ -17,57 +19,98 @@ from .permissions import IsOwnerOrReadOnly, IsAdminOrReadOnly
 from .serializers import (AddFavoriteRecipeSerializer,
                           AddShoppingListRecipeSerializer,
                           IngredientSerializer, RecipeReadSerializer,
-                          RecipeWriteSerializer, TagSerializer, UserSerializer,
-                          FollowSerializer,
+                          RecipeWriteSerializer, TagSerializer,
+                          UserCreateSerializer, SubscribeSerializer,
+                          UserListSerializer, SetPasswordSerializer
                           )
 
 
-class UserViewSet(UserViewSet):
+class CustomUserViewSet(UserViewSet):
     queryset = User.objects.all()
-    serializer_class = UserSerializer
-    pagination_class = LimitPageNumberPagination
+    permission_classes = (IsAuthenticatedOrReadOnly,)
 
-    @action(detail=False,
-            methods=['get'],
-            permission_classes=[IsAuthenticated])
+    def get_serializer_class(self):
+        if self.action == 'set_password':
+            return SetPasswordSerializer
+        if self.action == 'create':
+            return UserCreateSerializer
+        return UserListSerializer
+
+    def get_permissions(self):
+        if self.action == 'me':
+            self.permission_classes = [IsAuthenticated]
+        return super().get_permissions()
+
+    def get_serializer_context(self):
+
+        return {'request': self.request,
+                'format': self.format_kwarg,
+                'view': self,
+                'subscriptions': set(
+                    Subscribe.objects.filter(
+                        user_id=self.request.user
+                    ).values_list('author_id', flat=True)
+                )
+                }
+
+    @action(
+        detail=False,
+        permission_classes=(IsAuthenticated,))
     def subscriptions(self, request):
-        user = request.user
-        queryset = User.objects.filter(following__user=user)
-        page = self.paginate_queryset(queryset)
-        serializer = FollowSerializer(page,
-                                      many=True,
-                                      context={'request': request})
+        queryset = Subscribe.objects.filter(user=request.user)
+        pages = self.paginate_queryset(queryset)
+        serializer = SubscribeSerializer(
+            pages,
+            many=True,
+            context={'request': request}, )
         return self.get_paginated_response(serializer.data)
 
-    @action(detail=True,
-            methods=['post', 'delete'],
-            permission_classes=[IsAuthenticated])
-    def subscribe(self, request, id):
-        user = request.user
-        author = get_object_or_404(User, id=id)
 
-        if request.method == 'POST':
-            if user.id == author.id:
-                return Response({'detail': 'Нельзя подписаться на себя'},
-                                status=status.HTTP_400_BAD_REQUEST)
-            if Follow.objects.filter(author=author, user=user).exists():
-                return Response({'detail': 'Вы уже подписаны!'},
-                                status=status.HTTP_400_BAD_REQUEST)
-            Follow.objects.create(user=user, author=author)
-            serializer = FollowSerializer(author,
-                                          context={'request': request})
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+class SubscribeViewSet(CreateDestroyViewSet):
+    serializer_class = SubscribeSerializer
 
-        if request.method == 'DELETE':
-            if not Follow.objects.filter(user=user, author=author).exists():
-                return Response({'errors': 'Вы не подписаны'},
-                                status=status.HTTP_400_BAD_REQUEST)
-            subscription = get_object_or_404(Follow,
-                                             user=user,
-                                             author=author)
-            subscription.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    def get_queryset(self):
+        return self.request.user.follower.all()
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['author_id'] = self.kwargs.get('user_id')
+        return context
+
+    def perform_create(self, serializer):
+        serializer.save(
+            user=self.request.user,
+            author=get_object_or_404(
+                User,
+                id=self.kwargs.get('user_id')
+            )
+        )
+
+    def get_serializer_context(self):
+        return {
+            'request': self.request,
+            'format': self.format_kwarg,
+            'view': self,
+            'subscriptions': set(
+                Subscribe.objects.filter(
+                    user_id=self.request.user
+                ).values_list('author_id', flat=True)
+            )
+        }
+
+    @action(methods=('delete',), detail=True)
+    def delete(self, request, user_id):
+        get_object_or_404(User, id=user_id)
+        if not Subscribe.objects.filter(
+                user=request.user, author_id=user_id).exists():
+            return Response({'errors': settings.ERROR_FOLLOW_AUTHOR},
+                            status=status.HTTP_400_BAD_REQUEST)
+        get_object_or_404(
+            Subscribe,
+            user=request.user,
+            author_id=user_id
+        ).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):

@@ -15,7 +15,7 @@ SECRET_KEY = os.getenv(
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', default=True)
+DEBUG = os.getenv('DEBUG', default=False)
 
 HOSTS_FROM_ENV = [os.getenv('ALLOWED_HOSTS', default='localhost').split(' ')]
 ALLOWED_HOSTS = ['*']
@@ -209,6 +209,15 @@ INCORRECT_LAYOUT = str.maketrans(
     'йцукенгшщзхъфывапролджэячсмитьбю.'
 )
 ALREADY_BUY = 'Вы уже добавили рецепт в список покупок.'
-# ADMIN_EMAIL = admingmail.com
 RECIPE_IN_FAVORITE = 'Вы уже добавили рецепт в избранное.'
 TAG_ERROR = 'Вы забыли добавить тег'
+MAX_LEN_USER_EMAIL = 255
+MAX_LEN_USER_FIELD = 150
+USER = 'user'
+ADMIN = 'admin'
+
+USER_ROLE_CHOICES = (
+        (USER, 'Пользователь'),
+        (ADMIN, 'Админ'),
+    )
+ROLE_USER_ADMIN = 50
