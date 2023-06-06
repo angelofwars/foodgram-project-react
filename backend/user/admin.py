@@ -22,4 +22,3 @@ class SubscribeAdmin(admin.ModelAdmin):
     search_fields = ('author', 'created')
     list_filter = ('author', 'user', 'created')
     empy_value_display = '-empty-'
-

@@ -8,7 +8,7 @@ from django.conf import settings
 from django.db.models import Sum
 from urllib.parse import unquote
 from .mixins import CreateDestroyViewSet
-from rest_framework.permissions import (SAFE_METHODS, IsAuthenticated,
+from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from .filters import RecipeFilter, IngredientSearchFilter
 from recipes.models import (Favorite, Ingredient, RecipeIngredient, Recipe,

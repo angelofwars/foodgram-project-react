@@ -2,7 +2,7 @@ from django.conf import settings
 from django.contrib.auth.hashers import check_password
 from django.db import models, transaction
 from drf_extra_fields.fields import Base64ImageField
-from rest_framework import (exceptions, fields, relations, serializers, status,
+from rest_framework import (exceptions, fields, relations, serializers,
                             validators)
 from django.shortcuts import get_object_or_404
 from recipes.models import (Favorite, Ingredient, RecipeIngredient, Recipe,
@@ -44,6 +44,7 @@ class UserListSerializer(UserSerializer):
 
 class UserCreateSerializer(UserCreateSerializer):
     """Серелайзер создания пользователя"""
+
     class Meta:
         model = User
         fields = '__all__'

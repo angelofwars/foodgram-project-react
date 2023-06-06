@@ -217,7 +217,7 @@ USER = 'user'
 ADMIN = 'admin'
 
 USER_ROLE_CHOICES = (
-        (USER, 'Пользователь'),
-        (ADMIN, 'Админ'),
-    )
+    (USER, 'Пользователь'),
+    (ADMIN, 'Админ'),
+)
 ROLE_USER_ADMIN = 50
