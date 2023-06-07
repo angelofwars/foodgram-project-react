@@ -9,7 +9,7 @@ services:
       - .env
 
   backend:
-    image: angelofwars/backend:latest
+    image: angelofwars/backend:v2
     # build: ../backend
     restart: always
     volumes:

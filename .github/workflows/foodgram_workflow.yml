@@ -60,9 +60,9 @@ jobs:
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/backend:latest
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/backend:v2
             sudo docker-compose stop
-            sudo docker-compose rm ${{ secrets.DOCKER_USERNAME }}/backend:latest
+            sudo docker-compose rm ${{ secrets.DOCKER_USERNAME }}/backend:v2
             touch .env
             echo DB_ENGINE=${{ secrets.DB_ENGINE }} >> .env
             echo DB_NAME=${{ secrets.DB_NAME }} >> .env
@@ -76,6 +76,9 @@ jobs:
             sudo docker-compose up -d --build
             sudo docker-compose exec -T backend python manage.py makemigrations
             sudo docker-compose exec -T backend python manage.py makemigrations user
+            sudo docker-compose exec -T backend python manage.py makemigrations recipes
+            sudo docker-compose exec -T backend python manage.py migrate user
+            sudo docker-compose exec -T backend python manage.py migrate recipes
             sudo docker-compose exec -T backend python manage.py migrate --run-syncdb
             sudo docker-compose exec -T backend python manage.py collectstatic --no-input
 #            sudo docker-compose exec -T backend python manage.py load_tags
