@@ -205,3 +205,4 @@ COLOR_PALETTE = [
     ("#FFFF00", 'Желтый'),
 ]
 MODEL_NAME = 200
+MODEL_FACT = 1
