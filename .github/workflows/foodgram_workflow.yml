@@ -81,6 +81,6 @@ jobs:
             sudo docker-compose exec -T backend python manage.py migrate recipes
             sudo docker-compose exec -T backend python manage.py migrate --run-syncdb
             sudo docker-compose exec -T backend python manage.py collectstatic --no-input
-            sudo docker-compose exec -T backend python manage.py import_date
+#            sudo docker-compose exec -T backend python manage.py import_date
 
 
