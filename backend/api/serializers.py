@@ -1,4 +1,3 @@
-from .utils import Base64ImageField, create_ingredients
 from django.db import transaction
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
@@ -6,6 +5,8 @@ from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 from user.models import Follow, User
+
+from .utils import Base64ImageField, create_ingredients
 
 
 class UserSignUpSerializer(UserCreateSerializer):
