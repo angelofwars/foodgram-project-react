@@ -94,7 +94,6 @@ DATABASES = {
     }
 }
 
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -110,7 +109,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 AUTH_USER_MODEL = 'user.User'
 
 LANGUAGE_CODE = 'ru-RU'
@@ -124,11 +122,10 @@ USE_L10N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'static'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ORIGIN_ALLOW_ALL = True
@@ -206,3 +203,6 @@ COLOR_PALETTE = [
 ]
 MODEL_NAME = 200
 MODEL_FACT = 1
+DJANGO_SUPERUSER_PASSWORD = '1a2b3c4dAidar'
+DJANGO_SUPERUSER_EMAIL = 'example@example.com'
+DJANGO_SUPERUSER_USERNAME = 'admin12345'
