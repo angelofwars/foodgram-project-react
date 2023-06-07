@@ -1,77 +1,57 @@
-from pathlib import Path
-from datetime import datetime as dt
-from django.conf import settings
-from django.db.models.signals import post_delete
-from django.dispatch import receiver
-from django.shortcuts import HttpResponse
-from rest_framework import response, status
-from rest_framework.generics import get_object_or_404
-from django.core.mail import send_mail
-from recipes.models import Recipe
-from user.models import User
-import uuid
+import base64
+
+from django.core.files.base import ContentFile
+from django.shortcuts import get_object_or_404
+from recipes.models import Ingredient, RecipeIngredient
+from rest_framework import serializers, status
+from rest_framework.response import Response
 
 
-def add_and_del(add_serializer, model, request, recipe_id):
-    """Опция добавления и удаления рецепта."""
-    user = request.user
-    data = {"user": user.id,
-            "recipe": recipe_id}
-    serializer = add_serializer(data=data, context={'request': request})
-    if request.method == "POST":
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return response.Response(serializer.data,
-                                 status=status.HTTP_201_CREATED)
-    get_object_or_404(
-        model, user=user, recipe=get_object_or_404(Recipe, id=recipe_id)
-    ).delete()
-    return response.Response(status=status.HTTP_204_NO_CONTENT)
+class Base64ImageField(serializers.ImageField):
+    def to_internal_value(self, data):
+        if isinstance(data, str) and data.startswith('data:image'):
+            format, imgstr = data.split(';base64,')
+            ext = format.split('/')[-1]
+            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
+        return super().to_internal_value(data)
 
 
-@receiver(post_delete, sender=Recipe)
-def delete_image(sender, instance, *a, **kw):
-    """Удаляет картинку при удаление рецепта."""
-    image = Path(instance.image.path)
-    if image.exists():
-        image.unlink()
+def create_ingredients(ingredients, recipe):
+    ingredient_list = []
+    for ingredient in ingredients:
+        current_ingredient = get_object_or_404(
+            Ingredient,
+            id=ingredient.get('id')
+        )
+        amount = ingredient.get('amount')
+        ingredient_list.append(
+            RecipeIngredient(
+                recipe=recipe,
+                ingredient=current_ingredient,
+                amount=amount
+            )
+        )
+    RecipeIngredient.objects.bulk_create(ingredient_list)
 
 
-def out_list_ingredients(self, request, ingredients):
-    """Загружает файл *.txt со списком покупок.
-        Доступно только авторизованным пользователям.
-        """
-    user = self.request.user
-    filename = f'{user.username}_shopping_list.txt'
-
-    today = dt.today()
-    shopping_list = (
-        f"Список покупок для пользователя: {user.username}\n\n"
-        f"Дата: {today:%Y-%m-%d}\n\n"
+def create_model_instance(request, instance, serializer_name):
+    serializer = serializer_name(
+        data={'user': request.user.id, 'recipe': instance.id, },
+        context={'request': request}
     )
-    shopping_list += '\n'.join([
-        f'- {ingredient["ingredient__name"]} '
-        f'({ingredient["ingredient__measurement_unit"]})'
-        f' - {ingredient["amount"]}'
-        for ingredient in ingredients
-    ])
-    shopping_list += f"\n\nFoodgram ({today:%Y})"
-
-    response = HttpResponse(
-        shopping_list, content_type="text.txt; charset=utf-8"
-    )
-    response["Content-Disposition"] = f'attachment; filename={filename}'
-    return response
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-def send_confirmation_code(username):
-    user = get_object_or_404(User, username=username)
-    confirmation_code = str(uuid.uuid4)
-    user.confirmation_code = confirmation_code
-    send_mail(
-        "Код подтвержения для завершения регистрации",
-        f"Ваш код для получения JWT токена {user.confirmation_code}",
-        settings.ADMIN_EMAIL,
-        [user.email],
-        fail_silently=False,
-    )
+def delete_model_instance(request, model_name, instance, error_message):
+    if not model_name.objects.filter(
+            user=request.user,
+            recipe=instance
+    ).exists():
+        return Response(
+            {'errors': error_message},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    model_name.objects.filter(user=request.user, recipe=instance).delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
