@@ -8,17 +8,9 @@ from user.models import User
 class Tag(models.Model):
     """Модель тега"""
 
-    COLOR_PALETTE = [
-        ("#0000FF", 'Синий'),
-        ("#FFA500", 'Оранжевый'),
-        ("#008000", 'Зеленый'),
-        ("#800080", 'Фиолетовый'),
-        ("#FFFF00", 'Желтый'),
-    ]
-
     name = models.CharField(
         verbose_name="Название",
-        max_length=250,
+        max_length=settings.MODEL_NAME,
         unique=True,
         help_text="Имя тега"
     )
@@ -26,13 +18,13 @@ class Tag(models.Model):
     color = ColorField(
         default="##0000FF",
         verbose_name="Название",
-        choices=COLOR_PALETTE,
+        choices=settings.COLOR_PALETTE,
         help_text="Имя тега"
     )
 
     slug = models.SlugField(
         verbose_name="Slag юрл",
-        max_length=200,
+        max_length=settings.MODEL_NAME,
         unique=True,
         help_text="Slag url"
     )
@@ -52,11 +44,11 @@ class Tag(models.Model):
 class Ingredient(models.Model):
     name = models.CharField(
         'Название',
-        max_length=200,
+        max_length=settings.MODEL_NAME,
     )
     measurement_unit = models.CharField(
         'Единица измерения',
-        max_length=200,
+        max_length=settings.MODEL_NAME,
     )
 
     class Meta:
@@ -76,7 +68,7 @@ class Recipe(models.Model):
     )
     name = models.CharField(
         'Название',
-        max_length=200,
+        max_length=settings.MODEL_NAME,
     )
     image = models.ImageField(
         'Фото',
