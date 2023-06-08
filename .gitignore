@@ -130,6 +130,7 @@ dmypy.json
 
 # .ideaba
 .idea
-.database
-database/
-staticfiles
+
+infra/database
+backend/staticfiles
+frontend/node_modules
