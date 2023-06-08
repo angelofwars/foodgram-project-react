@@ -19,7 +19,7 @@ services:
       - .env
 
   frontend:
-    image: angelofwars/frontend:lastest
+    image: angelofwars/forntend:v4
     volumes:
       - ../frontend/:/app/result_build/
     depends_on:
