@@ -7,52 +7,53 @@ from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from djoser.views import UserViewSet
 from user.models import Follow, User
-
+from .pagination import LimitPageNumberPagination
 from .filters import IngredientFilter, RecipeFilter
 from .permissions import IsAdminAuthorOrReadOnly, IsAdminOrReadOnly
 from .serializers import (FavoriteSerializer, IngredientSerializer,
                           RecipeCreateSerializer, RecipeGetSerializer,
                           ShoppingCartSerializer, TagSerializer,
-                          UserSubscribeRepresentSerializer,
-                          UserSubscribeSerializer)
+                          UserSerializer, FollowSerializer)
 from .utils import create_model_instance, delete_model_instance
 
 
-class UserSubscribeView(APIView):
-    """Создание/удаление подписки на пользователя."""
+class UsersViewSet(UserViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
 
-    def post(self, request, user_id):
-        author = get_object_or_404(User, id=user_id)
-        serializer = UserSubscribeSerializer(
-            data={'user': request.user.id, 'author': author.id},
-            context={'request': request}
+    @action(
+        methods=['GET'], detail=False,
+        permission_classes=(IsAuthenticated,),
+        pagination_class=LimitPageNumberPagination,
+    )
+    def subscriptions(self, request):
+        user = self.request.user
+        queryset = Follow.objects.filter(user=user)
+        page = self.paginate_queryset(queryset)
+        serializer = FollowSerializer(
+            page, many=True, context={'request': request}
         )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return self.get_paginated_response(serializer.data)
 
-    def delete(self, request, user_id):
-        author = get_object_or_404(User, id=user_id)
-        if not Follow.objects.filter(
-                user=request.user,
-                author=author
-        ).exists():
-            return Response(
-                {'errors': 'Вы не подписаны на этого пользователя'},
-                status=status.HTTP_400_BAD_REQUEST
+    @action(
+        methods=['POST', 'DELETE'], detail=True,
+        permission_classes=(IsAuthenticated,),
+    )
+    def subscribe(self, request, id):
+        user = request.user
+        author = get_object_or_404(User, id=id)
+        if request.method == 'POST':
+            serializer = FollowSerializer(
+                Follow.objects.create(user=user, author=author),
+                context={'request': request},
             )
-        Follow.objects.get(user=request.user.id, author=user_id).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-class UserSubscriptionsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
-    """Получение списка всех подписок на пользователей."""
-    serializer_class = UserSubscribeRepresentSerializer
-
-    def get_queryset(self):
-        return User.objects.filter(following__user=self.request.user)
+            return Response(
+                serializer.data, status=status.HTTP_201_CREATED
+            )
+        Follow.objects.filter(user=user, author=author).delete()
+        return Response('Успешная отписка', status=status.HTTP_204_NO_CONTENT)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
