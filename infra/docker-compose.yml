@@ -10,7 +10,6 @@ services:
 
   backend:
     image: angelofwars/backend:v3
-    # build: ../backend
     restart: always
     volumes:
       - static_value:/backend/static/
@@ -43,7 +42,3 @@ volumes:
   db_value:
   static_value:
   media_value:
-
-
-
-

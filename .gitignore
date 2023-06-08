@@ -128,5 +128,8 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# .idea
+# .ideaba
 .idea
+.database
+database/
+staticfiles
