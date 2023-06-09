@@ -12,8 +12,8 @@ services:
     image: angelofwars/backend:v3
     restart: always
     volumes:
-      - static_value:/backend/static/
-      - media_value:/backend/media/
+      - static_value:/foodgram/static/
+      - media_value:/foodgram/media/
     env_file:
       - .env
 

@@ -1,28 +1,23 @@
-from django.urls import path, include
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
-from djoser.views import TokenCreateView, TokenDestroyView
 
-from .views import (TagViewSet, IngredientViewSet, UserViewSet, RecipeViewSet)
+from .views import (IngredientViewSet, RecipeViewSet, TagViewSet,
+                    UserSubscribeView, UserSubscriptionsViewSet)
 
 app_name = 'api'
 
-users_router_v1 = DefaultRouter()
-users_router_v1.register(r'', UserViewSet)
+router = DefaultRouter()
 
-recipes_router_v1 = DefaultRouter()
-recipes_router_v1.register(r'', RecipeViewSet)
+router.register('tags', TagViewSet, basename='tags')
+router.register('ingredients', IngredientViewSet, basename='ingredients')
+router.register('recipes', RecipeViewSet, basename='recipes')
+router.register('users', UserSubscriptionsViewSet, basename='users')
 
-ingredients_router_v1 = DefaultRouter()
-ingredients_router_v1.register(r'', IngredientViewSet)
-
-tags_router_v1 = DefaultRouter()
-tags_router_v1.register(r'', TagViewSet)
+namespace = 'api'
 
 urlpatterns = [
-    path(r'auth/token/login/', TokenCreateView.as_view(), name='login'),
-    path(r'auth/token/logout/', TokenDestroyView.as_view(), name='logout'),
-    path(r'users/', include(users_router_v1.urls)),
-    path(r'recipes/', include(recipes_router_v1.urls)),
-    path(r'ingredients/', include(ingredients_router_v1.urls)),
-    path(r'tags/', include(tags_router_v1.urls)),
+    path('users/<int:user_id>/subscribe/', UserSubscribeView.as_view()),
+    path('', include(router.urls)),
+    path('', include('djoser.urls')),
+    path('auth/', include('djoser.urls.authtoken')),
 ]
