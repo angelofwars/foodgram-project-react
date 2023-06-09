@@ -1,77 +1,19 @@
 from django.contrib import admin
 
-from .models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                     ShoppingCart, Tag)
+from recipes.models import Recipe, IngredientInRecipe, Favorite, ShoppingCart
 
-
-@admin.register(Tag)
-class TagAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "color", "slug",)
-    search_fields = ("name", "slug",)
-    ordering = ("color",)
-
-
-@admin.register(Ingredient)
-class IngredientAdmin(admin.ModelAdmin):
-    list_display = (
-        'id',
-        'name',
-        'measurement_unit'
-    )
-    search_fields = ('name',)
-    list_filter = ('name',)
-    empty_value_display = '-пусто-'
-
-
-class RecipeIngredientInline(admin.TabularInline):
-    model = RecipeIngredient
+admin.site.register(IngredientInRecipe)
+admin.site.register(Favorite)
+admin.site.register(ShoppingCart)
 
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = (
-        'id',
-        'name',
-        'author',
-        'favorite_amount'
-    )
-    search_fields = ('name', 'author')
-    list_filter = ('name', 'author', 'tags')
-    empty_value_display = '-пусто-'
-    inlines = [RecipeIngredientInline, ]
+    """Модель рецептов в админке"""
+    list_display = ('name', 'author', 'in_favorite')
+    list_filter = ('author', 'name', 'tags')
 
-    def favorite_amount(self, obj):
-        return obj.favorites.count()
-
-
-@admin.register(RecipeIngredient)
-class RecipeIngredientAdmin(admin.ModelAdmin):
-    list_display = (
-        'id',
-        'recipe',
-        'ingredient',
-        'amount'
-    )
-    empty_value_display = '-пусто-'
-
-
-@admin.register(Favorite)
-class FavoriteAdmin(admin.ModelAdmin):
-    list_display = (
-        'id',
-        'user',
-        'recipe'
-    )
-    search_fields = ('user', 'recipe')
-    empty_value_display = '-пусто-'
-
-
-@admin.register(ShoppingCart)
-class ShoppingCartAdmin(admin.ModelAdmin):
-    list_display = (
-        'id',
-        'user',
-        'recipe'
-    )
-    search_fields = ('user', 'recipe')
-    empty_value_display = '-пусто-'
+    def in_favorite(self, obj):
+        """Показывает сколько раз рецепт был добавлен в избранное"""
+        count = obj.in_favorite.all().count()
+        return count
