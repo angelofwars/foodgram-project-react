@@ -12,7 +12,7 @@
 [![Yandex.Cloud](https://img.shields.io/badge/-Yandex.Cloud-464646?style=flat-square&logo=Yandex.Cloud)](https://cloud.yandex.ru/)
 
 ```angular2html
-ADMIN_USER =  angelofwars@angelofwars.ru
+ADMIN_USER = angelofwars_admin
 ADMIN_PASS = 24a09r97n24
 ```
 
